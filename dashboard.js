@@ -1,871 +1,1232 @@
-// =========================================================
-// GOLDVORTEX DASHBOARD
-// STEP 10.2 - REAL API CONNECTION
-// =========================================================
+// ============================================================
+// GOLDVORTEX™ DASHBOARD.JS
+// FINAL VERSION
+// READ-ONLY MT5 MONITOR
+// ============================================================
 
-const CONFIG = {
+"use strict";
 
-  // =========================================
-  // DEMO MODE
-  // =========================================
-  // false = menggunakan data MT5 REAL
-  // =========================================
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
-  DEMO_MODE: false,
+const API_BASE =
+    "https://goldvortex-api.irhamwrapublic.workers.dev";
 
-
-  // =========================================
-  // GOLDVORTEX API
-  // =========================================
-
-  API_URL:
-    "https://goldvortex-api.irhamwrapublic.workers.dev/api/dashboard",
+const REFRESH_INTERVAL =
+    5000;
 
 
-  // =========================================
-  // LICENSE KEY
-  // =========================================
-  // Untuk sementara kita gunakan license
-  // akun testing Anda.
-  //
-  // Nanti pada tahap LOGIN kita akan membuat
-  // license key ini otomatis mengikuti user.
-  // =========================================
+// ============================================================
+// GET LICENSE KEY
+// ============================================================
+// Bisa diambil dari:
+// 1. URL ?license_key=...
+// 2. localStorage
+// 3. fallback demo account
+// ============================================================
 
-  LICENSE_KEY:
-    "GVX-MT5-193891875",
+function getLicenseKey() {
 
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
 
-  // =========================================
-  // REFRESH
-  // =========================================
+    const urlLicense =
+        params.get("license_key");
 
-  REFRESH_MS:
-    5000
+    if (urlLicense) {
 
-};
+        localStorage.setItem(
+            "goldvortex_license_key",
+            urlLicense
+        );
 
-
-
-// =========================================================
-// DEMO DATA
-// =========================================================
-// Hanya digunakan jika DEMO_MODE = true
-// =========================================================
-
-const demo = {
-
-  user: {
-
-    name:
-      "GOLDVORTEX User"
-
-  },
-
-  account: {
-
-    login:
-      "193891875",
-
-    server:
-      "DEMO-SERVER",
-
-    status:
-      "ONLINE",
-
-    last_update:
-      new Date().toISOString(),
-
-    balance:
-      10000,
-
-    equity:
-      10250,
-
-    profit:
-      250,
-
-    swap:
-      3.2,
-
-    margin:
-      500,
-
-    free_margin:
-      9750,
-
-    margin_level:
-      2050,
-
-    license_key:
-      "GVX-MT5-193891875",
-
-    license_status:
-      "VALID",
-
-    expires_at:
-      "2026-09-15T00:00:00Z"
-
-  },
-
-  positions: []
-
-};
-
-
-
-// =========================================================
-// DOM HELPER
-// =========================================================
-
-const $ = id =>
-  document.getElementById(id);
-
-
-
-// =========================================================
-// NUMBER FORMAT
-// =========================================================
-
-function num(value) {
-
-  return Number(
-    value || 0
-  ).toLocaleString(
-    "en-US",
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+        return urlLicense;
     }
-  );
+
+
+    const savedLicense =
+        localStorage.getItem(
+            "goldvortex_license_key"
+        );
+
+    if (savedLicense) {
+
+        return savedLicense;
+    }
+
+
+    // ========================================================
+    // DEMO / TEST ACCOUNT
+    // ========================================================
+
+    return "GVX-MT5-193891875";
+}
+
+
+// ============================================================
+// GLOBAL DATA
+// ============================================================
+
+let dashboardDataCache =
+    null;
+
+
+// ============================================================
+// DOM READY
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        loadDashboard();
+
+        setInterval(
+            loadDashboard,
+            REFRESH_INTERVAL
+        );
+
+    }
+);
+
+
+// ============================================================
+// LOAD DASHBOARD
+// ============================================================
+
+async function loadDashboard() {
+
+    const licenseKey =
+        getLicenseKey();
+
+
+    if (!licenseKey) {
+
+        showSystemMessage(
+            "License key belum ditemukan."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                API_BASE +
+                "/api/dashboard?license_key=" +
+                encodeURIComponent(
+                    licenseKey
+                ),
+                {
+                    method: "GET",
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            throw new Error(
+                data.error ||
+                "Dashboard API Error"
+            );
+
+        }
+
+
+        dashboardDataCache =
+            data;
+
+
+        renderDashboard(
+            data
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "GOLDVORTEX Dashboard Error:",
+            error
+        );
+
+
+        setOfflineState();
+
+
+        showSystemMessage(
+            "Tidak dapat mengambil data dari Monitor EA."
+        );
+
+    }
 
 }
 
 
-
-// =========================================================
-// MONEY FORMAT
-// =========================================================
-
-function money(
-  value,
-  currency = "IDR"
-) {
-
-  const amount =
-    Number(value || 0);
-
-
-  try {
-
-    return new Intl.NumberFormat(
-      "id-ID",
-      {
-        style:
-          "currency",
-
-        currency:
-          currency,
-
-        minimumFractionDigits:
-          2,
-
-        maximumFractionDigits:
-          2
-      }
-    ).format(amount);
-
-  } catch {
-
-    return amount.toLocaleString(
-      "id-ID",
-      {
-        minimumFractionDigits:
-          2,
-
-        maximumFractionDigits:
-          2
-      }
-    );
-
-  }
-
-}
-
-
-
-// =========================================================
-// REMAINING LICENSE
-// =========================================================
-
-function remain(
-  expiresAt
-) {
-
-  if (!expiresAt) {
-
-    return "—";
-
-  }
-
-
-  const expiry =
-    new Date(
-      expiresAt
-    );
-
-  const diff =
-    expiry.getTime() -
-    Date.now();
-
-
-  if (
-    Number.isNaN(
-      expiry.getTime()
-    )
-  ) {
-
-    return "—";
-
-  }
-
-
-  if (
-    diff <= 0
-  ) {
-
-    return "EXPIRED";
-
-  }
-
-
-  const days =
-    Math.ceil(
-      diff /
-      86400000
-    );
-
-
-  if (
-    days === 1
-  ) {
-
-    return "1 DAY";
-
-  }
-
-
-  return days + " DAYS";
-
-}
-
-
-
-// =========================================================
-// DATE FORMAT
-// =========================================================
-
-function dateTime(
-  value
-) {
-
-  if (!value) {
-
-    return "—";
-
-  }
-
-
-  const date =
-    new Date(
-      value
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return value;
-
-  }
-
-
-  return date.toLocaleString(
-    "id-ID"
-  );
-
-}
-
-
-
-// =========================================================
+// ============================================================
 // RENDER DASHBOARD
-// =========================================================
+// ============================================================
 
-function render(
-  data
+function renderDashboard(
+    data
 ) {
 
-  // =========================================
-  // API DATA
-  // =========================================
+    const license =
+        data.license || {};
 
-  const license =
-    data.license || {};
+    const monitor =
+        data.monitor || {};
 
-  const monitor =
-    data.monitor || {};
+    const positions =
+        Array.isArray(
+            data.positions
+        )
+            ? data.positions
+            : [];
 
 
-  // =========================================
-  // USER
-  // =========================================
+    // ========================================================
+    // LICENSE
+    // ========================================================
 
-  if ($("userName")) {
-
-    $("userName").textContent =
-      data.user?.name ||
-      "GOLDVORTEX User";
-
-  }
-
-
-  // =========================================
-  // ACCOUNT
-  // =========================================
-
-  if ($("accountLogin")) {
-
-    $("accountLogin").textContent =
-      monitor.mt5_account ||
-      license.mt5_account ||
-      "Waiting for MT5 data...";
-
-  }
-
-
-  if ($("server")) {
-
-    $("server").textContent =
-      monitor.server ||
-      "—";
-
-  }
-
-
-  if ($("accountId")) {
-
-    $("accountId").textContent =
-      monitor.mt5_account ||
-      license.mt5_account ||
-      "—";
-
-  }
-
-
-  // =========================================
-  // MONITOR STATUS
-  // =========================================
-
-  const monitorOnline =
-    String(
-      monitor.ea_status || ""
-    ).toUpperCase() ===
-    "MONITOR_ONLINE";
-
-
-  if ($("monitorStatus")) {
-
-    $("monitorStatus").textContent =
-      monitorOnline
-        ? "ONLINE"
-        : "OFFLINE";
-
-  }
-
-
-  // =========================================
-  // LAST UPDATE
-  // =========================================
-
-  if ($("lastUpdate")) {
-
-    $("lastUpdate").textContent =
-      dateTime(
-        monitor.last_update
-      );
-
-  }
-
-
-  // =========================================
-  // CURRENCY
-  // =========================================
-
-  const currency =
-    monitor.currency ||
-    "IDR";
-
-
-  // =========================================
-  // BALANCE
-  // =========================================
-
-  if ($("balance")) {
-
-    $("balance").textContent =
-      money(
-        monitor.balance,
-        currency
-      );
-
-  }
-
-
-  // =========================================
-  // EQUITY
-  // =========================================
-
-  if ($("equity")) {
-
-    $("equity").textContent =
-      money(
-        monitor.equity,
-        currency
-      );
-
-  }
-
-
-  // =========================================
-  // FLOATING PROFIT
-  // =========================================
-
-  if ($("profit")) {
-
-    $("profit").textContent =
-      money(
-        monitor.floating_profit,
-        currency
-      );
-
-  }
-
-
-  // =========================================
-  // SWAP
-  // =========================================
-  // Monitor API saat ini belum mengirim
-  // swap secara terpisah.
-  //
-  // Untuk sementara tampilkan 0.
-  // Nanti bisa ditambahkan ke Monitor EA/API.
-  // =========================================
-
-  if ($("swap")) {
-
-    $("swap").textContent =
-      money(
-        0,
-        currency
-      );
-
-  }
-
-
-  // =========================================
-  // MARGIN
-  // =========================================
-
-  if ($("margin")) {
-
-    $("margin").textContent =
-      money(
-        monitor.margin,
-        currency
-      );
-
-  }
-
-
-  // =========================================
-  // FREE MARGIN
-  // =========================================
-
-  if ($("freeMargin")) {
-
-    $("freeMargin").textContent =
-      money(
-        monitor.free_margin,
-        currency
-      );
-
-  }
-
-
-  // =========================================
-  // MARGIN LEVEL
-  // =========================================
-
-  if ($("marginLevel")) {
-
-    $("marginLevel").textContent =
-      num(
-        monitor.margin_level
-      ) + "%";
-
-  }
-
-
-  // =========================================
-  // LICENSE STATUS
-  // =========================================
-
-  const licenseStatus =
-    String(
-      license.status ||
-      monitor.license_status ||
-      "UNKNOWN"
-    ).toUpperCase();
-
-
-  const licenseValid =
-    licenseStatus ===
-    "ACTIVE";
-
-
-  if ($("licenseStatus")) {
-
-    $("licenseStatus").textContent =
-      licenseStatus;
-
-  }
-
-
-  if ($("licenseBadge")) {
-
-    $("licenseBadge").textContent =
-      licenseValid
-        ? "ACTIVE"
-        : "LOCKED";
-
-  }
-
-
-  // =========================================
-  // LICENSE KEY
-  // =========================================
-
-  if ($("licenseKey")) {
-
-    $("licenseKey").textContent =
-      license.license_key ||
-      monitor.license_key ||
-      "—";
-
-  }
-
-
-  // =========================================
-  // EXPIRY
-  // =========================================
-
-  if ($("expiresAt")) {
-
-    $("expiresAt").textContent =
-      dateTime(
-        license.expires_at
-      );
-
-  }
-
-
-  // =========================================
-  // REMAINING
-  // =========================================
-
-  if ($("remaining")) {
-
-    $("remaining").textContent =
-      remain(
-        license.expires_at
-      );
-
-  }
-
-
-  // =========================================
-  // POSITIONS
-  // =========================================
-
-  const positionCount =
-    Number(
-      monitor.positions || 0
+    renderLicense(
+        license
     );
 
 
-  if ($("positionCount")) {
+    // ========================================================
+    // MONITOR
+    // ========================================================
 
-    $("positionCount").textContent =
-      positionCount +
-      " POSITION" +
-      (
-        positionCount === 1
-          ? ""
-          : "S"
-      );
-
-  }
+    renderMonitor(
+        monitor
+    );
 
 
-  // =========================================
-  // CURRENT API ONLY PROVIDES
-  // POSITION COUNT
-  // =========================================
-  //
-  // Detail position belum dikirim oleh
-  // Monitor EA/API.
-  //
-  // Karena itu jangan membuat data posisi
-  // palsu.
-  // =========================================
+    // ========================================================
+    // POSITIONS
+    // ========================================================
 
-  if ($("positionsBody")) {
+    renderPositions(
+        positions,
+        monitor
+    );
+
+
+    // ========================================================
+    // SYSTEM MESSAGE
+    // ========================================================
 
     if (
-      positionCount <= 0
+        monitor.ea_status ===
+        "MONITOR_ONLINE"
     ) {
 
-      $("positionsBody").innerHTML = `
-        <tr>
-          <td colspan="8">
-            No open positions.
-          </td>
-        </tr>
-      `;
+        showSystemMessage(
+            "GOLDVORTEX Monitor EA aktif dan mengirim data MT5 secara real-time."
+        );
 
     } else {
 
-      $("positionsBody").innerHTML = `
-        <tr>
-          <td colspan="8">
-            ${positionCount}
-            open position(s) detected.
-            Position details will be available
-            in the next monitoring update.
-          </td>
-        </tr>
-      `;
+        showSystemMessage(
+            "Monitor EA tidak terdeteksi aktif."
+        );
 
     }
-
-  }
-
-
-  // =========================================
-  // SYSTEM MESSAGE
-  // =========================================
-
-  if ($("systemMessage")) {
-
-    if (
-      monitorOnline &&
-      licenseValid
-    ) {
-
-      $("systemMessage").textContent =
-        "Monitor EA connected. Dashboard is receiving the latest MT5 monitoring state.";
-
-    }
-
-    else if (
-      licenseStatus ===
-      "EXPIRED"
-    ) {
-
-      $("systemMessage").textContent =
-        "LICENSE EXPIRED. GOLDVORTEX protection state is active.";
-
-    }
-
-    else if (
-      !monitorOnline
-    ) {
-
-      $("systemMessage").textContent =
-        "Monitor EA is offline or has not sent a recent monitoring update.";
-
-    }
-
-    else {
-
-      $("systemMessage").textContent =
-        "License is not valid. Dashboard is displaying the current protection state.";
-
-    }
-
-  }
 
 }
 
 
+// ============================================================
+// RENDER LICENSE
+// ============================================================
 
-// =========================================================
-// LOAD DASHBOARD
-// =========================================================
+function renderLicense(
+    license
+) {
 
-async function load() {
+    const status =
+        String(
+            license.status ||
+            "UNKNOWN"
+        ).toUpperCase();
 
-  // =========================================
-  // DEMO MODE
-  // =========================================
 
-  if (
-    CONFIG.DEMO_MODE
-  ) {
-
-    demo.account.last_update =
-      new Date().toISOString();
-
-    render(
-      demo
+    setText(
+        "licenseKey",
+        license.license_key || "—"
     );
 
-    return;
 
-  }
-
-
-  // =========================================
-  // REAL API
-  // =========================================
-
-  try {
-
-    const endpoint =
-      CONFIG.API_URL +
-      "?license_key=" +
-      encodeURIComponent(
-        CONFIG.LICENSE_KEY
-      );
+    setText(
+        "expiresAt",
+        formatDate(
+            license.expires_at
+        )
+    );
 
 
-    const response =
-      await fetch(
-        endpoint,
-        {
-          method:
-            "GET",
+    setText(
+        "licenseStatus",
+        status === "ACTIVE"
+            ? "VALID"
+            : status
+    );
 
-          headers: {
 
-            Accept:
-              "application/json"
+    setText(
+        "licenseBadge",
+        status
+    );
 
-          },
 
-          cache:
-            "no-store"
+    setText(
+        "remaining",
+        calculateRemaining(
+            license.expires_at
+        )
+    );
+
+
+    // ========================================================
+    // LICENSE COLOR / STATE
+    // ========================================================
+
+    const badge =
+        document.getElementById(
+            "licenseBadge"
+        );
+
+
+    if (badge) {
+
+        badge.classList.remove(
+            "active",
+            "expired",
+            "warning"
+        );
+
+
+        if (
+            status === "ACTIVE"
+        ) {
+
+            badge.classList.add(
+                "active"
+            );
 
         }
-      );
 
 
-    if (
-      !response.ok
-    ) {
+        if (
+            status === "EXPIRED"
+        ) {
 
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
+            badge.classList.add(
+                "expired"
+            );
 
-    }
-
-
-    const data =
-      await response.json();
+        }
 
 
-    // =========================================
-    // API ERROR
-    // =========================================
+        if (
+            isExpiringSoon(
+                license.expires_at
+            )
+        ) {
 
-    if (
-      !data.success
-    ) {
+            badge.classList.add(
+                "warning"
+            );
 
-      throw new Error(
-        data.error ||
-        "API_ERROR"
-      );
+        }
 
     }
-
-
-    // =========================================
-    // RENDER
-    // =========================================
-
-    render(
-      data
-    );
-
-
-  } catch (
-    error
-  ) {
-
-    console.error(
-      "GOLDVORTEX Dashboard API Error:",
-      error
-    );
-
-
-    if (
-      $("monitorStatus")
-    ) {
-
-      $("monitorStatus")
-        .textContent =
-        "OFFLINE";
-
-    }
-
-
-    if (
-      $("systemMessage")
-    ) {
-
-      $("systemMessage")
-        .textContent =
-        "Dashboard API unavailable: " +
-        error.message;
-
-    }
-
-  }
 
 }
 
 
+// ============================================================
+// RENDER MONITOR
+// ============================================================
 
-// =========================================================
-// INITIAL LOAD
-// =========================================================
+function renderMonitor(
+    monitor
+) {
 
-load();
+    const isOnline =
+        monitor.ea_status ===
+        "MONITOR_ONLINE";
 
 
+    // ========================================================
+    // MONITOR STATUS
+    // ========================================================
 
-// =========================================================
-// AUTO REFRESH
-// =========================================================
+    setText(
+        "monitorStatus",
+        isOnline
+            ? "ONLINE"
+            : "OFFLINE"
+    );
 
-setInterval(
-  load,
-  CONFIG.REFRESH_MS
-);
+
+    // ========================================================
+    // LAST UPDATE
+    // ========================================================
+
+    setText(
+        "lastUpdate",
+        formatDate(
+            monitor.last_update
+        )
+    );
+
+
+    // ========================================================
+    // ACCOUNT
+    // ========================================================
+
+    setText(
+        "accountLogin",
+        monitor.mt5_account ||
+        "Waiting for MT5 data..."
+    );
+
+
+    setText(
+        "accountId",
+        monitor.mt5_account ||
+        "—"
+    );
+
+
+    setText(
+        "server",
+        monitor.server ||
+        "—"
+    );
+
+
+    // ========================================================
+    // BALANCE
+    // ========================================================
+
+    setText(
+        "balance",
+        formatMoney(
+            monitor.balance,
+            monitor.currency
+        )
+    );
+
+
+    // ========================================================
+    // EQUITY
+    // ========================================================
+
+    setText(
+        "equity",
+        formatMoney(
+            monitor.equity,
+            monitor.currency
+        )
+    );
+
+
+    // ========================================================
+    // FLOATING PROFIT
+    // ========================================================
+
+    setText(
+        "profit",
+        formatMoney(
+            monitor.floating_profit,
+            monitor.currency
+        )
+    );
+
+
+    // ========================================================
+    // MARGIN
+    // ========================================================
+
+    setText(
+        "margin",
+        formatMoney(
+            monitor.margin,
+            monitor.currency
+        )
+    );
+
+
+    // ========================================================
+    // FREE MARGIN
+    // ========================================================
+
+    setText(
+        "freeMargin",
+        formatMoney(
+            monitor.free_margin,
+            monitor.currency
+        )
+    );
+
+
+    // ========================================================
+    // MARGIN LEVEL
+    // ========================================================
+
+    setText(
+        "marginLevel",
+        formatNumber(
+            monitor.margin_level,
+            2
+        ) +
+        "%"
+    );
+
+
+    // ========================================================
+    // SWAP
+    // ========================================================
+    // Worker saat ini belum mengirim field swap.
+    // Jangan membuat data palsu.
+    // ========================================================
+
+    setText(
+        "swap",
+        "—"
+    );
+
+
+    // ========================================================
+    // ONLINE / OFFLINE CLASS
+    // ========================================================
+
+    const statusElement =
+        document.getElementById(
+            "monitorStatus"
+        );
+
+
+    if (statusElement) {
+
+        statusElement.classList.toggle(
+            "offline",
+            !isOnline
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// RENDER POSITIONS
+// ============================================================
+
+function renderPositions(
+    positions,
+    monitor
+) {
+
+    const body =
+        document.getElementById(
+            "positionsBody"
+        );
+
+
+    const count =
+        document.getElementById(
+            "positionCount"
+        );
+
+
+    // ========================================================
+    // POSITION COUNT
+    // ========================================================
+
+    if (count) {
+
+        count.textContent =
+            positions.length +
+            (
+                positions.length === 1
+                    ? " POSITION"
+                    : " POSITIONS"
+            );
+
+    }
+
+
+    // ========================================================
+    // EMPTY
+    // ========================================================
+
+    if (!body) {
+
+        return;
+    }
+
+
+    if (
+        positions.length === 0
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    No open positions
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // RENDER ALL POSITIONS
+    // ========================================================
+
+    body.innerHTML =
+        positions
+            .map(
+                position =>
+                    createPositionRow(
+                        position,
+                        monitor.currency
+                    )
+            )
+            .join("");
+
+}
+
+
+// ============================================================
+// CREATE POSITION ROW
+// ============================================================
+
+function createPositionRow(
+    position,
+    currency
+) {
+
+    const type =
+        String(
+            position.position_type ||
+            ""
+        ).toUpperCase();
+
+
+    const typeClass =
+        type === "BUY"
+            ? "buy"
+            : type === "SELL"
+                ? "sell"
+                : "";
+
+
+    const profit =
+        Number(
+            position.profit || 0
+        );
+
+
+    const profitClass =
+        profit > 0
+            ? "profit-positive"
+            : profit < 0
+                ? "profit-negative"
+                : "";
+
+
+    return `
+        <tr>
+
+            <td>
+                <strong>
+                    ${escapeHTML(
+                        position.symbol ||
+                        "—"
+                    )}
+                </strong>
+            </td>
+
+            <td>
+                <span class="position-type ${typeClass}">
+                    ${escapeHTML(type || "—")}
+                </span>
+            </td>
+
+            <td>
+                ${formatNumber(
+                    position.volume,
+                    2
+                )}
+            </td>
+
+            <td>
+                ${formatPrice(
+                    position.open_price
+                )}
+            </td>
+
+            <td>
+                ${formatPrice(
+                    position.current_price
+                )}
+            </td>
+
+            <td>
+                ${
+                    Number(
+                        position.sl
+                    ) > 0
+                        ? formatPrice(
+                            position.sl
+                        )
+                        : "—"
+                }
+            </td>
+
+            <td>
+                ${
+                    Number(
+                        position.tp
+                    ) > 0
+                        ? formatPrice(
+                            position.tp
+                        )
+                        : "—"
+                }
+            </td>
+
+            <td class="${profitClass}">
+                ${formatMoney(
+                    profit,
+                    currency
+                )}
+            </td>
+
+        </tr>
+    `;
+
+}
+
+
+// ============================================================
+// FORMAT MONEY
+// ============================================================
+
+function formatMoney(
+    value,
+    currency
+) {
+
+    const numberValue =
+        Number(
+            value || 0
+        );
+
+
+    if (
+        !Number.isFinite(
+            numberValue
+        )
+    ) {
+
+        return "—";
+
+    }
+
+
+    const curr =
+        String(
+            currency ||
+            "USD"
+        ).toUpperCase();
+
+
+    try {
+
+        return new Intl.NumberFormat(
+            "id-ID",
+            {
+                style: "currency",
+                currency: curr,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        ).format(
+            numberValue
+        );
+
+    } catch {
+
+        return (
+            numberValue
+                .toLocaleString(
+                    "id-ID",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                )
+            +
+            " " +
+            curr
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// FORMAT NUMBER
+// ============================================================
+
+function formatNumber(
+    value,
+    decimals = 2
+) {
+
+    const numberValue =
+        Number(
+            value
+        );
+
+
+    if (
+        !Number.isFinite(
+            numberValue
+        )
+    ) {
+
+        return "0.00";
+
+    }
+
+
+    return numberValue.toLocaleString(
+        "en-US",
+        {
+            minimumFractionDigits:
+                decimals,
+
+            maximumFractionDigits:
+                decimals
+        }
+    );
+
+}
+
+
+// ============================================================
+// FORMAT PRICE
+// ============================================================
+
+function formatPrice(
+    value
+) {
+
+    const numberValue =
+        Number(
+            value
+        );
+
+
+    if (
+        !Number.isFinite(
+            numberValue
+        ) ||
+        numberValue === 0
+    ) {
+
+        return "—";
+
+    }
+
+
+    return numberValue.toLocaleString(
+        "en-US",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    );
+
+}
+
+
+// ============================================================
+// FORMAT DATE
+// ============================================================
+
+function formatDate(
+    value
+) {
+
+    if (!value) {
+
+        return "—";
+
+    }
+
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(
+            value
+        );
+
+    }
+
+
+    return date.toLocaleString(
+        "id-ID",
+        {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+        }
+    );
+
+}
+
+
+// ============================================================
+// CALCULATE REMAINING
+// ============================================================
+
+function calculateRemaining(
+    expiresAt
+) {
+
+    if (!expiresAt) {
+
+        return "—";
+
+    }
+
+
+    const expiry =
+        new Date(
+            expiresAt
+        );
+
+
+    if (
+        isNaN(
+            expiry.getTime()
+        )
+    ) {
+
+        return "—";
+
+    }
+
+
+    const now =
+        new Date();
+
+
+    const difference =
+        expiry.getTime() -
+        now.getTime();
+
+
+    if (
+        difference <= 0
+    ) {
+
+        return "EXPIRED";
+
+    }
+
+
+    const totalSeconds =
+        Math.floor(
+            difference / 1000
+        );
+
+
+    const days =
+        Math.floor(
+            totalSeconds /
+            86400
+        );
+
+
+    const hours =
+        Math.floor(
+            (
+                totalSeconds %
+                86400
+            ) /
+            3600
+        );
+
+
+    const minutes =
+        Math.floor(
+            (
+                totalSeconds %
+                3600
+            ) /
+            60
+        );
+
+
+    if (days > 0) {
+
+        return (
+            days +
+            "d " +
+            hours +
+            "h"
+        );
+
+    }
+
+
+    if (hours > 0) {
+
+        return (
+            hours +
+            "h " +
+            minutes +
+            "m"
+        );
+
+    }
+
+
+    return (
+        minutes +
+        "m"
+    );
+
+}
+
+
+// ============================================================
+// EXPIRING SOON
+// ============================================================
+
+function isExpiringSoon(
+    expiresAt
+) {
+
+    if (!expiresAt) {
+
+        return false;
+
+    }
+
+
+    const expiry =
+        new Date(
+            expiresAt
+        );
+
+
+    if (
+        isNaN(
+            expiry.getTime()
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    const now =
+        new Date();
+
+
+    const difference =
+        expiry.getTime() -
+        now.getTime();
+
+
+    const sevenDays =
+        7 *
+        24 *
+        60 *
+        60 *
+        1000;
+
+
+    return (
+        difference > 0 &&
+        difference <= sevenDays
+    );
+
+}
+
+
+// ============================================================
+// OFFLINE STATE
+// ============================================================
+
+function setOfflineState() {
+
+    setText(
+        "monitorStatus",
+        "OFFLINE"
+    );
+
+
+    setText(
+        "lastUpdate",
+        "Connection lost"
+    );
+
+}
+
+
+// ============================================================
+// SYSTEM MESSAGE
+// ============================================================
+
+function showSystemMessage(
+    message
+) {
+
+    setText(
+        "systemMessage",
+        message
+    );
+
+}
+
+
+// ============================================================
+// SET TEXT
+// ============================================================
+
+function setText(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (!element) {
+
+        return;
+
+    }
+
+
+    element.textContent =
+        value === undefined ||
+        value === null
+            ? "—"
+            : value;
+
+}
+
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+// ============================================================
+// OPTIONAL DEBUG ACCESS
+// ============================================================
+
+window.GOLDVORTEX =
+    {
+
+        getData: function() {
+
+            return dashboardDataCache;
+
+        },
+
+        refresh: function() {
+
+            return loadDashboard();
+
+        },
+
+        getLicenseKey: function() {
+
+            return getLicenseKey();
+
+        }
+
+    };
