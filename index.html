@@ -1,792 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>GOLDVORTEX™ | Adaptive XAUUSD Trading Engine</title>
-
-    <meta name="description"
-          content="GOLDVORTEX™ - Adaptive XAUUSD Trading Engine">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GOLDVORTEX Admin — Activation Management v1.0.2</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
+  <div id="app">
+    <section id="loginView" class="view">
+      <div class="card login-card">
+        <div class="brand"><span>G</span> GOLDVORTEX</div>
+        <div class="eyebrow">ADMINISTRATOR</div>
+        <h1>Secure Login</h1>
+        <p class="muted">Sign in to manage GOLDVORTEX activations.</p>
+        <form id="loginForm">
+          <label>Email<input id="loginEmail" type="email" autocomplete="username" required></label>
+          <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+          <button class="primary" type="submit">LOGIN</button>
+          <div id="loginMsg" class="msg"></div>
+        </form>
+      </div>
+    </section>
 
-    <!-- =========================
-         HEADER
-    ========================== -->
+    <section id="dashboardView" class="view hidden">
+      <header class="topbar">
+        <div class="brand"><span>G</span> GOLDVORTEX <small>ADMIN</small></div>
+        <div class="top-actions"><span id="adminName" class="muted"></span><button id="logoutBtn" class="ghost">LOGOUT</button></div>
+      </header>
 
-    <header class="header">
-
-        <div class="container nav">
-
-            <div class="logo">
-                <div class="logo-icon">G</div>
-
-                <div>
-                    <div class="logo-name">
-                        GOLDVORTEX<span>™</span>
-                    </div>
-
-                    <div class="logo-tagline">
-                        Adaptive XAUUSD Trading Engine
-                    </div>
-                </div>
-            </div>
-
-
-            <nav class="menu">
-
-                <a href="#home">Home</a>
-
-                <a href="#how-it-works">
-                    How It Works
-                </a>
-
-                <a href="#monitor">
-                    MT5 Monitor
-                </a>
-
-                <a href="#activate">
-                    Activate
-                </a>
-
-            </nav>
-
-
-            <a href="#activate"
-               class="nav-button">
-                ACTIVATE GOLDVORTEX
-            </a>
-
+      <main class="container">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">ACTIVATION MANAGEMENT</div>
+            <h1>GoldVortex Activations</h1>
+            <p class="muted">Monitor customers who have activated GOLDVORTEX and open their activation details.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="refreshBtn" class="ghost">REFRESH ACTIVATIONS</button>
+            <input id="monitorLicense" class="monitor-input" placeholder="Enter License Key e.g. GVX-MT5-193891875">
+            <button id="loadMonitorBtn" class="primary">LOAD MONITOR</button>
+          </div>
         </div>
 
-    </header>
+        <div id="stats" class="stats"></div>
 
-
-
-    <!-- =========================
-         HERO
-    ========================== -->
-
-    <main>
-
-        <section id="home"
-                 class="hero">
-
-            <div class="container hero-grid">
-
-                <div class="hero-content">
-
-                    <div class="eyebrow">
-                        XAUUSD TRADING TECHNOLOGY
-                    </div>
-
-
-                    <h1>
-                        GOLDVORTEX<span>™</span>
-                    </h1>
-
-
-                    <h2>
-                        Adaptive XAUUSD
-                        <br>
-                        Trading Engine
-                    </h2>
-
-
-                    <p>
-                        Real-time XAUUSD monitoring and
-                        adaptive trading technology built
-                        for the volatility of Gold.
-                    </p>
-
-
-                    <div class="hero-buttons">
-
-                        <a href="#activate"
-                           class="button primary">
-                            ACTIVATE GOLDVORTEX
-                        </a>
-
-
-                        <a href="#monitor"
-                           class="button secondary">
-                            MT5 MONITOR
-                        </a>
-
-                    </div>
-
-
-                    <div class="risk-text">
-
-                        Forex trading involves significant
-                        risk. GOLDVORTEX™ does not guarantee
-                        profits or eliminate trading risk.
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- VISUAL -->
-
-                <div class="hero-visual">
-
-                    <div class="grid-background"></div>
-
-
-                    <div class="gold-ring">
-
-                        <div class="g-symbol">
-                            G
-                        </div>
-
-                    </div>
-
-
-                    <div class="market-card">
-
-                        <div>
-                            XAUUSD
-                        </div>
-
-                        <div class="market-status">
-                            ● MONITORING
-                        </div>
-
-                    </div>
-
-                    <div class="laptop-visual" aria-label="GOLDVORTEX MT5 dashboard preview">
-                        <div class="laptop-screen">
-                            <div class="laptop-topbar">
-                                <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
-                                <span class="terminal-title">GOLDVORTEX / MT5 MONITOR</span>
-                                <span class="terminal-live">● LIVE</span>
-                            </div>
-                            <div class="dashboard-mini">
-                                <div class="mini-sidebar">
-                                    <div class="mini-logo">GV</div>
-                                    <span class="mini-active"></span><span></span><span></span><span></span>
-                                </div>
-                                <div class="mini-main">
-                                    <div class="mini-stats">
-                                        <div><small>BALANCE</small><b>$10,248.50</b></div>
-                                        <div><small>EQUITY</small><b>$10,386.20</b></div>
-                                        <div><small>SYMBOL</small><b>XAUUSD</b></div>
-                                    </div>
-                                    <div class="mini-chart">
-                                        <div class="chart-grid"></div>
-                                        <svg viewBox="0 0 620 235" preserveAspectRatio="none" aria-hidden="true">
-                                            <defs>
-                                                <linearGradient id="gvLine" x1="0" x2="1" y1="0" y2="0">
-                                                    <stop offset="0" stop-color="#b88b36"/>
-                                                    <stop offset=".55" stop-color="#f1d17c"/>
-                                                    <stop offset="1" stop-color="#fff1bb"/>
-                                                </linearGradient>
-                                                <linearGradient id="gvFill" x1="0" x2="0" y1="0" y2="1">
-                                                    <stop offset="0" stop-color="#d9b45c" stop-opacity=".22"/>
-                                                    <stop offset="1" stop-color="#d9b45c" stop-opacity="0"/>
-                                                </linearGradient>
-                                            </defs>
-                                            <path d="M0 205 L35 193 L65 199 L98 165 L128 174 L162 132 L194 151 L225 119 L259 137 L292 101 L323 116 L355 84 L388 103 L422 67 L456 82 L490 52 L525 62 L558 31 L590 43 L620 18 L620 235 L0 235 Z" fill="url(#gvFill)"/>
-                                            <polyline points="0,205 35,193 65,199 98,165 128,174 162,132 194,151 225,119 259,137 292,101 323,116 355,84 388,103 422,67 456,82 490,52 525,62 558,31 590,43 620,18" fill="none" stroke="url(#gvLine)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <circle cx="620" cy="18" r="6" fill="#f5dc91"/>
-                                        </svg>
-                                        <div class="mini-symbol">XAUUSD <span>BUY</span></div>
-                                        <div class="mini-price">4,4xx.xx</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="laptop-base"><span></span></div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =========================
-             HOW IT WORKS
-        ========================== -->
-
-        <section id="how-it-works"
-                 class="section">
-
-            <div class="container">
-
-                <div class="section-heading">
-
-                    <div class="eyebrow">
-                        SYSTEM OVERVIEW
-                    </div>
-
-                    <h2>
-                        HOW GOLDVORTEX WORKS
-                    </h2>
-
-                    <p>
-                        A simple monitoring architecture
-                        connecting your MT5 account with
-                        GOLDVORTEX.
-                    </p>
-
-                </div>
-
-
-                <div class="steps">
-
-                    <div class="step-card">
-
-                        <div class="step-number">
-                            01
-                        </div>
-
-                        <h3>
-                            Register MT5 Account
-                        </h3>
-
-                        <p>
-                            Create your MT5 account
-                            before activating
-                            GOLDVORTEX.
-                        </p>
-
-                    </div>
-
-
-                    <div class="step-card">
-
-                        <div class="step-number">
-                            02
-                        </div>
-
-                        <h3>
-                            Activate GOLDVORTEX
-                        </h3>
-
-                        <p>
-                            Connect your MT5 account
-                            to the GOLDVORTEX platform.
-                        </p>
-
-                    </div>
-
-
-                    <div class="step-card">
-
-                        <div class="step-number">
-                            03
-                        </div>
-
-                        <h3>
-                            MT5 on VPS
-                        </h3>
-
-                        <p>
-                            MT5 is installed on a
-                            dedicated VPS environment.
-                        </p>
-
-                    </div>
-
-
-                    <div class="step-card">
-
-                        <div class="step-number">
-                            04
-                        </div>
-
-                        <h3>
-                            Connect EA
-                        </h3>
-
-                        <p>
-                            GOLDVORTEX Monitor EA
-                            sends MT5 data securely.
-                        </p>
-
-                    </div>
-
-
-                    <div class="step-card">
-
-                        <div class="step-number">
-                            05
-                        </div>
-
-                        <h3>
-                            Monitor MT5
-                        </h3>
-
-                        <p>
-                            Monitor your MT5 account
-                            through the dashboard.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =========================
-             BROKER
-        ========================== -->
-
-        <section class="section broker-section">
-
-            <div class="container">
-
-                <div class="broker-card">
-
-                    <div>
-
-                        <div class="eyebrow">
-                            STEP 01
-                        </div>
-
-                        <h2>
-                            REGISTER BROKER
-                        </h2>
-
-                        <p>
-                            Create your MT5 account
-                            before activating GOLDVORTEX.
-                        </p>
-
-                    </div>
-
-
-                    <div class="broker-info">
-
-                        <div>
-                            <span>
-                                Minimum Deposit
-                            </span>
-
-                            <strong>
-                                $100
-                            </strong>
-                        </div>
-
-
-                        <div>
-                            <span>
-                                Account
-                            </span>
-
-                            <strong>
-                                MT5 Cent Account
-                            </strong>
-                        </div>
-
-
-                        <div>
-                            <span>
-                                Instrument
-                            </span>
-
-                            <strong>
-                                XAUUSD
-                            </strong>
-                        </div>
-
-                    </div>
-
-
-                    <a
-                        href="https://ma.valetax-indonesia.com/p/165791"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="button primary">
-
-                        REGISTER BROKER
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =========================
-             ACTIVATION
-        ========================== -->
-
-        <section id="activate"
-                 class="section activation-section">
-
-            <div class="container">
-
-                <div class="section-heading">
-
-                    <div class="eyebrow">
-                        STEP 02
-                    </div>
-
-                    <h2>
-                        ACTIVATE GOLDVORTEX
-                    </h2>
-
-                    <p>
-                        Connect your MT5 account and
-                        configure your GOLDVORTEX license.
-                    </p>
-
-                </div>
-
-
-                <div class="activation-card">
-
-                    <form id="activationForm">
-
-                        <div class="form-grid">
-
-
-                            <div class="form-group">
-
-                                <label>
-                                    FULL NAME
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="name"
-                                    placeholder="Your full name"
-                                    required>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label>
-                                    EMAIL
-                                </label>
-
-                                <input
-                                    type="email"
-                                    id="email"
-                                    placeholder="you@example.com"
-                                    required>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label>
-                                    MT5 ACCOUNT ID
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="mt5"
-                                    placeholder="12345678"
-                                    required>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label>
-                                    SERVER
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="server"
-                                    placeholder="Broker-Server"
-                                    required>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label>
-                                    MT5 PASSWORD
-                                </label>
-
-                                <input
-                                    type="password"
-                                    id="password"
-                                    placeholder="MT5 password"
-                                    required>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label>
-                                    MAXIMUM TRADING DAYS
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="tradingDays"
-                                    min="1"
-                                    value="30"
-                                    placeholder="30"
-                                    required>
-
-                                <small>
-                                    Set the maximum active period
-                                    for this GOLDVORTEX account.
-                                </small>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="license-preview">
-
-                            <div>
-
-                                <span>
-                                    ACTIVATION DATE
-                                </span>
-
-                                <strong id="activationDate">
-                                    -
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span>
-                                    EXPIRY DATE
-                                </span>
-
-                                <strong id="expiryDate">
-                                    -
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <button
-                            type="submit"
-                            class="button primary full">
-
-                            ACTIVATE GOLDVORTEX
-
-                        </button>
-
-
-                        <div
-                            id="activationMessage"
-                            class="activation-message">
-
-                        </div>
-
-                    </form>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =========================
-             MT5 MONITOR
-        ========================== -->
-
-        <section id="monitor"
-                 class="section monitor-section">
-
-            <div class="container">
-
-                <div class="section-heading">
-
-                    <div class="eyebrow">
-                        MT5 TECHNOLOGY
-                    </div>
-
-                    <h2>
-                        MT5 MONITOR
-                    </h2>
-
-                    <p>
-                        Monitor account status,
-                        balance, equity and positions
-                        through the GOLDVORTEX platform.
-                    </p>
-
-                </div>
-
-
-                <div class="monitor-grid">
-
-
-                    <div class="monitor-card">
-
-                        <span>
-                            MT5 CONNECTION
-                        </span>
-
-                        <strong class="online">
-                            ● ONLINE
-                        </strong>
-
-                        <small>
-                            Last update:
-                            waiting for MT5 data
-                        </small>
-
-                    </div>
-
-
-                    <div class="monitor-card">
-
-                        <span>
-                            LICENSE
-                        </span>
-
-                        <strong>
-                            ACTIVE
-                        </strong>
-
-                        <small>
-                            Expiry controlled by
-                            GOLDVORTEX license.
-                        </small>
-
-                    </div>
-
-
-                    <div class="monitor-card">
-
-                        <span>
-                            INSTRUMENT
-                        </span>
-
-                        <strong>
-                            XAUUSD
-                        </strong>
-
-                        <small>
-                            Gold market monitoring
-                        </small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =========================
-             DISCLAIMER
-        ========================== -->
-
-        <section class="disclaimer">
-
-            <div class="container">
-
-                <strong>
-                    RISK DISCLOSURE
-                </strong>
-
-                <p>
-                    Forex trading involves substantial risk.
-                    GOLDVORTEX™ does not guarantee profits
-                    and does not eliminate trading risk.
-                </p>
-
-            </div>
-
-        </section>
-
-    </main>
-
-
-
-    <!-- =========================
-         FOOTER
-    ========================== -->
-
-    <footer>
-
-        <div class="container footer-content">
-
+        <section id="monitorCard" class="card hidden">
+          <div class="section-head">
             <div>
-
-                <div class="logo-name">
-                    GOLDVORTEX<span>™</span>
-                </div>
-
-                <div class="logo-tagline">
-                    Adaptive XAUUSD Trading Engine
-                </div>
-
+              <div class="eyebrow">MT5 MONITOR</div>
+              <h2 id="monitorTitle">—</h2>
+              <p id="monitorSubtitle" class="muted small"></p>
             </div>
+            <button id="closeMonitor" class="ghost">CLOSE</button>
+          </div>
+          <div id="monitorGrid" class="detail-grid"></div>
+          <div id="monitorPositions" class="table-wrap"></div>
+        </section>
 
-
-            <div class="footer-links">
-
-                <a href="#home">
-                    Home
-                </a>
-
-                <a href="#how-it-works">
-                    How It Works
-                </a>
-
-                <a href="#monitor">
-                    MT5 Monitor
-                </a>
-
-                <a href="#activate">
-                    Activate
-                </a>
-
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <h2>Activation List</h2>
+              <p class="muted small">Source: existing GOLDVORTEX Admin API. No change to Worker v1.8.4.</p>
             </div>
+            <input id="searchBox" class="search" placeholder="Search name, email, account, license...">
+          </div>
+          <div id="tableWrap" class="table-wrap">
+            <div class="loading">Loading...</div>
+          </div>
+        </section>
 
-        </div>
-
-
-        <div class="copyright">
-
-            © 2026 GOLDVORTEX™.
-            All Rights Reserved.
-
-        </div>
-
-    </footer>
-
-
-    <script src="script.js"></script>
-
+        <section id="detailCard" class="card hidden">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">ACTIVATION DETAILS</div>
+              <h2 id="detailTitle">—</h2>
+            </div>
+            <button id="closeDetail" class="ghost">CLOSE</button>
+          </div>
+          <div id="detailGrid" class="detail-grid"></div>
+          <div id="credentialNote" class="note hidden"></div>
+        </section>
+      </main>
+    </section>
+  </div>
+  <script src="./app.js"></script>
 </body>
 </html>
