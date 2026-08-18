@@ -8,7 +8,7 @@ database_name = "goldvortex_license"
 database_id = "e40b6ff6-aefb-462b-ba2d-adddcbefbf076"
 
 [vars]
-PUBLIC_APP_URL = "https://goldvortex.web.id.example"
+PUBLIC_APP_URL = "https://goldvortex.web.id"
 
 # Secrets are NOT stored in this file.
 # Configure with:
