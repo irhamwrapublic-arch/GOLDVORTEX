@@ -4,8 +4,8 @@ compatibility_date = "2026-08-18"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "goldvortex-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_name = "goldvortex_license"
+database_id = "e40b6ff6-aefb-462b-ba2d-adddcbefbf076"
 
 [vars]
 PUBLIC_APP_URL = "https://YOUR-DOMAIN.example"
