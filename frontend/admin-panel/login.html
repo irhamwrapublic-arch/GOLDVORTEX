@@ -1,1 +1,97 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GOLDVORTEX™ Admin Login</title><link rel="stylesheet" href="./style.css"></head><body><section class="view"><div class="card login-card"><div class="brand"><span>G</span> GOLDVORTEX</div><div class="eyebrow">ADMINISTRATOR</div><h1>Secure Login</h1><p class="muted">Sign in to manage customers, licenses and MT5 monitoring.</p><form id="loginForm"><label>Email<input id="email" type="email" required autocomplete="username"></label><label>Password<input id="password" type="password" required autocomplete="current-password"></label><button class="primary" type="submit">LOGIN</button><div id="msg" class="msg"></div></form><a href="../index.html" class="muted small">← Back to GOLDVORTEX</a></div></section><script>document.getElementById('loginForm').addEventListener('submit',async e=>{e.preventDefault();const msg=document.getElementById('msg'),b=e.submitter;b.disabled=true;b.textContent='SIGNING IN...';try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.value.trim().toLowerCase(),password:password.value})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'LOGIN_FAILED');localStorage.setItem('gvx_admin_session',d.token);location.href='index.html'}catch(err){msg.textContent=err.message;msg.className='msg error'}finally{b.disabled=false;b.textContent='LOGIN'}})</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GOLDVORTEX™ Admin Login</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<section class="view">
+  <div class="card login-card">
+    <div class="brand"><span>G</span> GOLDVORTEX</div>
+    <div class="eyebrow">ADMINISTRATOR</div>
+    <h1>Secure Login</h1>
+    <p class="muted">Sign in to manage customers, licenses and MT5 monitoring.</p>
+
+    <form id="loginForm">
+      <label>Email
+        <input id="email" type="email" required autocomplete="username">
+      </label>
+      <label>Password
+        <input id="password" type="password" required autocomplete="current-password">
+      </label>
+      <button class="primary" type="submit">LOGIN</button>
+      <div id="msg" class="msg"></div>
+    </form>
+
+    <a href="../index.html" class="muted small">← Back to GOLDVORTEX</a>
+  </div>
+</section>
+
+<script>
+const form = document.getElementById('loginForm');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const msg = document.getElementById('msg');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const button = e.submitter;
+  button.disabled = true;
+  button.textContent = 'SIGNING IN...';
+  msg.textContent = '';
+  msg.className = 'msg';
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        email: emailInput.value.trim().toLowerCase(),
+        password: passwordInput.value
+      }),
+      cache: 'no-store'
+    });
+
+    // Read as text first so an HTML/empty response never causes
+    // "Unexpected end of JSON input".
+    const raw = await response.text();
+    let data = null;
+    try {
+      data = raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      data = null;
+    }
+
+    if (!data) {
+      throw new Error(
+        response.ok
+          ? 'API returned an empty or invalid response.'
+          : `API_ERROR_${response.status}`
+      );
+    }
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || data.message || `LOGIN_FAILED_${response.status}`);
+    }
+
+    if (!data.token) {
+      throw new Error('LOGIN_TOKEN_MISSING');
+    }
+
+    localStorage.setItem('gvx_admin_session', data.token);
+    localStorage.setItem('gvx_admin_user', JSON.stringify(data.user || {}));
+    window.location.replace('index.html');
+  } catch (error) {
+    msg.textContent = error.message || 'LOGIN_FAILED';
+    msg.className = 'msg error';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'LOGIN';
+  }
+});
+</script>
+</body>
+</html>
