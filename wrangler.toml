@@ -10,7 +10,7 @@ routes = [
 [[d1_databases]]
 binding = "DB"
 database_name = "goldvortex_license"
-database_id = "e40b6ff6-aefb-462b-ba2d-adddcbefbf076"
+database_id = "e40b6ff6-aefb-462b-ba2d-addcdbefb076"
 
 [vars]
 PUBLIC_APP_URL = "https://goldvortex.web.id"
