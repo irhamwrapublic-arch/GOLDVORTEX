@@ -1,9 +1,8 @@
 name = "goldvortex-api"
-main = "worker/worker.js"
+main = "worker/admin-worker.js"
 compatibility_date = "2026-08-18"
 
 # Route the GOLDVORTEX API through this Worker.
-# Without this route, /api/* is handled by the frontend Pages site.
 routes = [
   { pattern = "goldvortex.web.id/api/*", zone_name = "goldvortex.web.id" }
 ]
