@@ -47,3 +47,7 @@ It authenticates the monitor using `license_key + mt5_account`. The Worker accep
 D1 must be bound to the Worker as `env.DB`. Cloudflare recommends keeping the Wrangler configuration as the source of truth for bindings. See the deployment guide and current Cloudflare documentation.
 
 Secrets such as the Resend API key and admin bootstrap secret must be stored as Worker secrets, not plaintext configuration.
+
+## Deployment
+
+Cloudflare Worker build trigger marker: 2026-08-18.
