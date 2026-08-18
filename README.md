@@ -51,3 +51,5 @@ Secrets such as the Resend API key and admin bootstrap secret must be stored as 
 ## Deployment
 
 Cloudflare Worker build trigger marker: 2026-08-18.
+
+Cloudflare Worker build configuration validated: root `wrangler.toml` deployment.
