@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GOLDVORTEX™ — Customer Login</title>
+<style>
+:root{--bg:#05070a;--panel:#0b1016;--line:#26303b;--gold:#e4b93f;--text:#f4f6f8;--muted:#8e99a6;--danger:#ff6b6b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,rgba(228,185,63,.11),transparent 35%),var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh;display:grid;place-items:center;padding:24px}.card{width:min(460px,100%);background:linear-gradient(145deg,#0d131a,#080c11);border:1px solid #303944;border-radius:18px;padding:34px;box-shadow:0 30px 90px rgba(0,0,0,.5)}.brand{display:flex;align-items:center;gap:12px;margin-bottom:34px}.mark{width:42px;height:42px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:21px}.brand b{letter-spacing:.08em}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.12em;margin-top:3px}.eyebrow{color:var(--gold);font-size:10px;letter-spacing:.18em;font-weight:700}h1{font-size:32px;margin:10px 0 8px}.intro{color:var(--muted);line-height:1.6;font-size:14px}.field{margin-top:18px}.field label{display:block;font-size:10px;letter-spacing:.12em;color:#b6c0ca;margin-bottom:7px}.field input{width:100%;background:#070b10;border:1px solid #303a45;color:#fff;border-radius:9px;padding:13px 14px;outline:none}.field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(228,185,63,.08)}button{width:100%;margin-top:22px;border:0;border-radius:9px;background:linear-gradient(135deg,#f0c64b,#dca92f);padding:14px;font-weight:800;cursor:pointer}.msg{display:none;margin-top:14px;padding:11px;border-radius:8px;font-size:13px}.msg.show{display:block;background:#111820;border:1px solid #28333e}.msg.error{display:block;color:#ff8585;border-color:#6b3030}.back{display:block;margin-top:20px;color:var(--muted);text-decoration:none;font-size:13px}.back:hover{color:#fff}
+</style>
+</head><body>
+<main class="card">
+  <div class="brand"><div class="mark">G</div><div><b>GOLDVORTEX™</b><small>ADAPTIVE XAUUSD TRADING ENGINE</small></div></div>
+  <div class="eyebrow">CUSTOMER ACCESS</div><h1>Welcome back.</h1>
+  <p class="intro">Sign in using the email address and license key delivered after your GOLDVORTEX activation.</p>
+  <form id="loginForm">
+    <div class="field"><label>EMAIL</label><input id="email" type="email" autocomplete="email" required placeholder="you@example.com"></div>
+    <div class="field"><label>LICENSE KEY</label><input id="license" required autocomplete="off" placeholder="GVX-XXXXXX-XXXXXXXX"></div>
+    <button id="submit" type="submit">SIGN IN TO DASHBOARD</button>
+    <div id="message" class="msg"></div>
+  </form>
+  <a class="back" href="index.html">← Back to GOLDVORTEX</a>
+</main>
+<script>
+const form=document.getElementById('loginForm'),msg=document.getElementById('message'),btn=document.getElementById('submit');
+const show=(text,error=false)=>{msg.textContent=text;msg.className='msg show'+(error?' error':'')};
+form.addEventListener('submit',async e=>{e.preventDefault();btn.disabled=true;btn.textContent='AUTHENTICATING...';msg.className='msg';
+ try{const email=document.getElementById('email').value.trim().toLowerCase(),license=document.getElementById('license').value.trim();
+ const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,license_key:license})});
+ const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'LOGIN_FAILED');
+ localStorage.setItem('gvx_customer_session',d.token);localStorage.setItem('gvx_customer_license',d.license_key||license);location.href='dashboard.html';
+ }catch(err){show(err.message||'Unable to sign in.',true)}finally{btn.disabled=false;btn.textContent='SIGN IN TO DASHBOARD'}});
+</script></body></html>
